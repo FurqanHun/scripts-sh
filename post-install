@@ -32,7 +32,7 @@ sudo sed -i '/^fastestmirror=/d' /etc/dnf/dnf.conf
 echo -e "max_parallel_downloads=10\nfastestmirror=True" | sudo tee -a /etc/dnf/dnf.conf
 
 echo "Updating the system..."
-sudo dnf update -y
+sudo dnf update --refresh -y
 
 install_if_missing() {
     for package in "$@"; do
