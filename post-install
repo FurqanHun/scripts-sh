@@ -1,0 +1,143 @@
+#!/usr/bin/env bash
+# Purpose: Post installation script for Fedora 41
+set -euo pipefail
+
+echo "This script is intended to be run on Fedora 41 (dnf5). It may not work on other versions."
+echo "Do you want to continue? (y/n)"
+read -r response
+if [[ ! "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+    echo "Exiting..."
+    exit 1
+fi
+
+echo "This script requires sudo to install and configure software. Please enter your password once."
+# keeps sudo alive
+while true; do sudo -v; sleep 60; done &
+
+TEMP_DIR="/tmp/fedora-post-install"
+
+LOG_FILE="$HOME/fedora-post-install.log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+
+echo "[$(date)] Starting Fedora 41 Post-Installation monke Script..."
+echo "Log file: $LOG_FILE"
+
+echo "Creating a temporary directory for the installation..."
+mkdir -p "$TEMP_DIR"
+cd "$TEMP_DIR"
+
+echo "Changing max parallel downloads to 10 and enabling fastest mirror in /etc/dnf/dnf.conf"
+sudo sed -i '/^max_parallel_downloads=/d' /etc/dnf/dnf.conf
+sudo sed -i '/^fastestmirror=/d' /etc/dnf/dnf.conf
+echo -e "max_parallel_downloads=10\nfastestmirror=True" | sudo tee -a /etc/dnf/dnf.conf
+
+echo "Updating the system..."
+sudo dnf update -y
+
+install_if_missing() {
+    for package in "$@"; do
+        if ! rpm -q "$package" &>/dev/null; then
+            echo "Installing $package..."
+            if sudo dnf install "$package" -y; then
+                echo "$package installed successfully."
+            else
+                echo "Failed to install $package" >> "$LOG_FILE"
+                exit 1
+            fi
+        else
+            echo "$package is already installed"
+        fi
+    done
+}
+
+echo "Installing RPM Fusion repos..."
+sudo dnf install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
+
+echo "Enabling fedora cisco openh264 repo..."
+sudo dnf config-manager setopt fedora-cisco-openh264.enabled=1
+
+install_if_missing curl wget unzip unrar p7zip git neofetch htop
+
+echo "Swapping ffmpeg-free for ffmpeg..."
+sudo dnf swap ffmpeg-free ffmpeg --allowerasing
+
+echo "Installing multimedia codecs..."
+sudo dnf update @multimedia --setopt="install_weak_deps=False" --exclude=PackageKit-gstreamer-plugin
+
+echo "Installing intel-media-driver..."
+sudo dnf install intel-media-driver -y
+
+echo "Installing librewolf repo..."
+curl -fsSL https://repo.librewolf.net/librewolf.repo | pkexec tee /etc/yum.repos.d/librewolf.repo
+echo "Installing librewolf..."
+sudo dnf install librewolf -y
+
+echo "Installing Mullvad repo..."
+sudo dnf config-manager addrepo --from-repofile=https://repository.mullvad.net/rpm/stable/mullvad.repo
+echo "Installing Mullvad browser..."
+sudo dnf install mullvad-browser -y
+
+echo "Downloading and installing Windscribe..."
+mkdir -p "$TEMP_DIR/windscribe"
+curl -fsSL https://windscribe.com/install/desktop/linux_rpm_x64 -o "$TEMP_DIR/windscribe/windscribe.rpm"
+sudo dnf install "$TEMP_DIR/windscribe/windscribe.rpm" -y
+
+echo "Removing Windscribe directory..."
+rm -rf "$TEMP_DIR/windscribe"
+
+# Install additional apps
+sudo dnf copr enable -y zeno/scrcpy && sudo dnf copr enable -y derisis13/ani-cli
+install_if_missing mpv ani-cli gimp hplip-gui android-tools clipit audacity kdenlive bleachbit scrcpy flatpak
+
+#zed
+curl -f https://zed.dev/install.sh | sh
+
+echo "Installing auto-cpufreq..."
+git clone https://github.com/AdnanHodzic/auto-cpufreq.git "$TEMP_DIR/auto-cpufreq"
+cd "$TEMP_DIR/auto-cpufreq" && sudo ./auto-cpufreq-installer
+
+echo "Removing auto-cpufreq directory..."
+rm -rf "$TEMP_DIR/auto-cpufreq"
+
+echo "Adding flathub remote..."
+if ! flatpak remote-list | grep -q flathub; then
+    flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+fi
+
+echo "Installing flatpak apps..."
+
+flatpak install -y flathub \
+    com.github.tchx84.Flatseal \
+    com.dec05eba.gpu_screen_recorder \
+    io.github.ungoogled_software.ungoogled_chromium \
+    com.discordapp.Discord \
+    com.usebottles.bottles \
+    net.lutris.Lutris \
+    com.vysp3r.ProtonPlus \
+    org.localsend.localsend_app \
+    org.keepassxc.KeePassXC \
+    org.onlyoffice.desktopeditors \
+    org.qbittorrent.qBittorrent
+
+mkdir -p "$HOME/scripts"
+echo "export PATH=\"$HOME/scripts:\$PATH\"" >> ~/.bashrc
+source ~/.bashrc
+
+# curl -L [ADD MASTER.ZIP LINK] -o "$TEMP_DIR/scripts.zip"
+# unzip "$TEMP_DIR/scripts.zip" -d "$HOME/scripts"
+# rm -f "$TEMP_DIR/scripts.zip"
+
+echo "Cleaning up..."
+sudo rm -rf "$TEMP_DIR"
+
+echo "[$(date)] Fedora 41 Post-Installation monke Script has been successfully completed!"
+
+echo "Don't forget to install auto-cpufreq daemon!"
+
+echo "Do you want to reboot now? (y/n)"
+read -r response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+    sudo reboot
+else
+    echo "Ayo monke, don't forget to reboot!"
+fi

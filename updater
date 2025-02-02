@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Purpose: Update all packages on the system
+
+set -euo pipefail
+echo
+
+printf "Updating atuin...\n"
+atuin-update
+echo
+
+printf "Updating DNF packages...\n"
+sudo dnf update --refresh -y
+echo
+
+printf "Updating auto-cpufreq...\n"
+sudo auto-cpufreq --update
+
+printf "Updating Flatpaks...\n"
+flatpak update -y
+echo

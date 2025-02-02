@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# Purpose: Monitor Wi-Fi connection and restart if it goes down
+
+set -euo pipefail
+
+# Set your Wi-Fi interface name
+INTERFACE="wlp2s0"
+arg=$1
+
+if [ "$arg" == "--force" ]; then
+    echo "Force restart Wi-Fi..."
+    sudo nmcli device disconnect $INTERFACE
+    sleep 2
+    sudo nmcli device connect $INTERFACE
+    sleep 5  # Give it time to reconnect
+    echo "Wi-Fi should be back up now."
+    exit 0
+fi
+if [ "$arg" == "--status" ]; then
+    nmcli device status | grep "$INTERFACE"
+    exit 0
+fi
+
+if [ "$arg" == "--help" ]; then
+    echo "Usage: $0 [--force] [--status] [--help]"
+    echo "  --force   Force restart Wi-Fi"
+    echo "  --status  Show Wi-Fi status"
+    echo "  --help    Show this help"
+    echo "  --start   Start monitoring Wi-Fi"
+    exit 0
+fi
+# if empty arg then run the while loop below
+
+if [ "$arg" == "--start" ]; then
+    echo "Started monitoring Wi-Fi on $INTERFACE"
+
+    while true; do
+        echo "$(date) - Checking Wi-Fi status..."
+
+        # Check if Wi-Fi is disconnected
+        if ! nmcli device status | grep -q "$INTERFACE.*connected"; then
+            echo "$(date) - Wi-Fi is down! Restarting..."
+            sudo nmcli device disconnect $INTERFACE
+            sleep 2
+            sudo nmcli device connect $INTERFACE
+            sleep 5  # Give it time to reconnect
+            echo "$(date) - Wi-Fi should be back up now."
+        else
+            echo "$(date) - Wi-Fi is fine."
+        fi
+
+        sleep 60  # Check every 1 minute
+    done
+fi
