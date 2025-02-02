@@ -1,6 +1,6 @@
 # scripts-sh
 
-Shell scripts i wrote for my own use.
+Bash scripts i wrote for my own use.
 
 ## Note for myself
 

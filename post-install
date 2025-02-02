@@ -15,7 +15,7 @@ echo "This script requires sudo to install and configure software. Please enter 
 while true; do sudo -v; sleep 60; done &
 
 TEMP_DIR="/tmp/fedora-post-install"
-
+SCRIPTS_ZIP="https://github.com/FurqanHun/scripts-sh/archive/refs/heads/master.zip"
 LOG_FILE="$HOME/fedora-post-install.log"
 exec > >(tee -a "$LOG_FILE") 2>&1
 
@@ -119,13 +119,19 @@ flatpak install -y flathub \
     org.onlyoffice.desktopeditors \
     org.qbittorrent.qBittorrent
 
+echo "Creating scripts directory..."
 mkdir -p "$HOME/scripts"
 echo "export PATH=\"$HOME/scripts:\$PATH\"" >> ~/.bashrc
 source ~/.bashrc
 
-# curl -L [ADD MASTER.ZIP LINK] -o "$TEMP_DIR/scripts.zip"
-# unzip "$TEMP_DIR/scripts.zip" -d "$HOME/scripts"
-# rm -f "$TEMP_DIR/scripts.zip"
+echo "Downloading and installing scripts..."
+curl -L $SCRIPTS_ZIP -o "$TEMP_DIR/scripts.zip"
+unzip "$TEMP_DIR/scripts.zip" -d "$TEMP_DIR"
+mv "$TEMP_DIR/scripts-sh-master" "$HOME/scripts"
+chmod +x "$HOME/scripts/*"
+
+echo "Removing scripts.zip and README.md..."
+rm -f "$TEMP_DIR/scripts.zip" "$TEMP_DIR/scripts-sh-master" "$HOME/scripts/README.md"
 
 echo "Cleaning up..."
 sudo rm -rf "$TEMP_DIR"
