@@ -2,19 +2,75 @@
 # Purpose: Update all packages on the system
 
 set -euo pipefail
-echo
 
-printf "Updating atuin...\n"
-atuin-update
-echo
+shutdown=false
+restart=false
+show_help=false
+for arg in "$@"; do
+  case $arg in
+    --shutdown)
+      shutdown=true
+      ;;
+    --restart)
+      restart=true
+      ;;
+      --help|-h)
+      show_help=true
+      ;;
+  esac
+done
 
+
+if [ "$show_help" = true ]; then
+  cat <<EOF
+Usage: $(basename "$0") [OPTIONS]
+
+Options:
+  --shutdown    Shutdown the system after updates
+  --restart     Restart the system after updates
+  --help, -h    Show this help message
+
+This script updates all packages on the system, including:
+  - DNF packages
+  - auto-cpufreq
+  - atuin
+  - Flatpak packages
+
+EOF
+  exit 0
+fi
+
+(sudo -v; while true; do sleep 60; sudo -v; done) &
+sudo_pid=$!
+
+echo
 printf "Updating DNF packages...\n"
 sudo dnf update --refresh -y
-echo
 
+echo
 printf "Updating auto-cpufreq...\n"
 sudo auto-cpufreq --update
 
+echo
+printf "Updating atuin...\n"
+atuin-update
+
+echo
 printf "Updating Flatpaks...\n"
 flatpak update -y
+
 echo
+printf "All updates completed successfully!\n"
+
+if [ "$shutdown" = true ]; then
+  echo "Shutting down the system..."
+  sudo shutdown now
+elif [ "$restart" = true ]; then
+  echo "Restarting the system..."
+  sudo reboot
+fi
+
+echo
+printf "Ending sudo session...\n"
+kill $sudo_pid
+sudo -k

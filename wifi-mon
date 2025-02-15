@@ -5,7 +5,7 @@ set -euo pipefail
 
 # Set your Wi-Fi interface name
 INTERFACE="wlp2s0"
-arg=$1
+arg="${1:-}"
 
 if [ "$arg" == "--force" ]; then
     echo "Force restart Wi-Fi..."
@@ -21,7 +21,7 @@ if [ "$arg" == "--status" ]; then
     exit 0
 fi
 
-if [ "$arg" == "--help" ]; then
+if [[ "$arg" == "--help" || -z "$arg" ]]; then
     echo "Usage: $0 [--force] [--status] [--help]"
     echo "  --force   Force restart Wi-Fi"
     echo "  --status  Show Wi-Fi status"
@@ -32,6 +32,9 @@ fi
 # if empty arg then run the while loop below
 
 if [ "$arg" == "--start" ]; then
+    echo "This script requires sudo to restart Wi-Fi."
+    sudo -v
+    while true; do sudo -v; sleep 60; done &
     echo "Started monitoring Wi-Fi on $INTERFACE"
 
     while true; do
