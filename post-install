@@ -86,8 +86,8 @@ echo "Removing Windscribe directory..."
 rm -rf "$TEMP_DIR/windscribe"
 
 # Install additional apps
-sudo dnf copr enable -y zeno/scrcpy && sudo dnf copr enable -y derisis13/ani-cli
-install_if_missing mpv ani-cli gimp hplip-gui android-tools clipit audacity kdenlive bleachbit scrcpy flatpak
+sudo dnf copr enable -y zeno/scrcpy && sudo dnf copr enable -y derisis13/ani-cli && sudo dnf copr enable -y furqanhun/lowfi && sudo dnf copr enable -y furqanhun/cotp
+install_if_missing mpv ani-cli gimp hplip-gui android-tools clipit audacity kdenlive bleachbit scrcpy flatpak lowfi cotp
 
 #zed
 curl -f https://zed.dev/install.sh | sh
