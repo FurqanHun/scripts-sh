@@ -50,13 +50,17 @@ install_if_missing() {
     done
 }
 
+echo "Downloading RPM Fusion repos..."
+curl -fsSL https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm -o "$TEMP_DIR/rpmfusion-free.rpm"
+curl -fsSL https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm -o "$TEMP_DIR/rpmfusion-nonfree.rpm"
+
 echo "Installing RPM Fusion repos..."
-sudo dnf install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
+sudo dnf install -y "$TEMP_DIR"/rpmfusion-*.rpm
 
 echo "Enabling fedora cisco openh264 repo..."
 sudo dnf config-manager setopt fedora-cisco-openh264.enabled=1
 
-install_if_missing curl wget unzip unrar p7zip git neofetch htop
+install_if_missing curl wget unzip unrar p7zip git fastfetch htop
 
 echo "Swapping ffmpeg-free for ffmpeg..."
 sudo dnf swap ffmpeg-free ffmpeg --allowerasing
