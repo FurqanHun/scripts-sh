@@ -77,10 +77,18 @@ sudo dnf config-manager addrepo --from-repofile=https://repository.mullvad.net/r
 echo "Installing Mullvad browser..."
 sudo dnf install mullvad-browser -y
 
+#windscribe
 echo "Downloading and installing Windscribe..."
 mkdir -p "$TEMP_DIR/windscribe"
 curl -fsSL https://windscribe.com/install/desktop/linux_rpm_x64 -o "$TEMP_DIR/windscribe/windscribe.rpm"
-sudo dnf install "$TEMP_DIR/windscribe/windscribe.rpm" -y
+
+# Log the output of the install command
+if sudo dnf install "$TEMP_DIR/windscribe/windscribe.rpm" -y; then
+    echo "Windscribe installed successfully." | tee -a "$LOG_FILE"
+else
+    echo "Failed to install Windscribe." | tee -a "$LOG_FILE"
+    exit 1
+fi
 
 echo "Removing Windscribe directory..."
 rm -rf "$TEMP_DIR/windscribe"
@@ -90,7 +98,12 @@ sudo dnf copr enable -y zeno/scrcpy && sudo dnf copr enable -y derisis13/ani-cli
 install_if_missing mpv ani-cli gimp hplip-gui android-tools clipit audacity kdenlive bleachbit scrcpy flatpak lowfi cotp
 
 #zed
-curl -f https://zed.dev/install.sh | sh
+if curl -fsSL https://zed.dev/install.sh -o "$TEMP_DIR/zed-install.sh"; then
+    bash "$TEMP_DIR/zed-install.sh"
+else
+    echo "Failed to download Zed installer. Exiting." | tee -a "$LOG_FILE"
+    exit 1
+fi
 
 echo "Installing auto-cpufreq..."
 git clone https://github.com/AdnanHodzic/auto-cpufreq.git "$TEMP_DIR/auto-cpufreq"
