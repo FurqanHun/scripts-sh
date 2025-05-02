@@ -110,7 +110,7 @@ flatpak install -y flathub \
     com.github.tchx84.Flatseal \
     com.dec05eba.gpu_screen_recorder \
     io.github.ungoogled_software.ungoogled_chromium \
-    com.discordapp.Discord \
+    dev.vencord.Vesktop \
     com.usebottles.bottles \
     net.lutris.Lutris \
     com.vysp3r.ProtonPlus \
