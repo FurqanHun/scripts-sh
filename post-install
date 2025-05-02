@@ -109,12 +109,12 @@ else
     exit 1
 fi
 
-echo "Installing auto-cpufreq..."
-git clone https://github.com/AdnanHodzic/auto-cpufreq.git "$TEMP_DIR/auto-cpufreq"
-cd "$TEMP_DIR/auto-cpufreq" && sudo ./auto-cpufreq-installer
+# echo "Installing auto-cpufreq..."
+# git clone https://github.com/AdnanHodzic/auto-cpufreq.git "$TEMP_DIR/auto-cpufreq"
+# cd "$TEMP_DIR/auto-cpufreq" && sudo ./auto-cpufreq-installer
 
-echo "Removing auto-cpufreq directory..."
-rm -rf "$TEMP_DIR/auto-cpufreq"
+# echo "Removing auto-cpufreq directory..."
+# rm -rf "$TEMP_DIR/auto-cpufreq"
 
 echo "Adding flathub remote..."
 if ! flatpak remote-list | grep -q flathub; then
@@ -143,8 +143,29 @@ source ~/.bashrc
 
 echo "Downloading and installing scripts..."
 curl -L $SCRIPTS_ZIP -o "$TEMP_DIR/scripts.zip"
+if [ $? -ne 0 ]; then
+    echo "Failed to download the script ZIP file."
+    exit 1
+fi
+
+# Check if the file is downloaded
+ls -l "$TEMP_DIR/scripts.zip"
+
 unzip "$TEMP_DIR/scripts.zip" -d "$TEMP_DIR"
+if [ $? -ne 0 ]; then
+    echo "Failed to unzip the script ZIP file."
+    exit 1
+fi
+
+# Check the unzipped files
+ls -l "$TEMP_DIR"
+
 mv "$TEMP_DIR/scripts-sh-master" "$HOME/scripts"
+if [ $? -ne 0 ]; then
+    echo "Failed to move scripts to $HOME/scripts"
+    exit 1
+fi
+
 chmod +x "$HOME/scripts/*"
 
 echo "Removing scripts.zip and README.md..."
