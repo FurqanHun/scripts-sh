@@ -158,15 +158,13 @@ if [ $? -ne 0 ]; then
 fi
 
 # Check the unzipped files
-ls -l "$TEMP_DIR"
+ls -l "$TEMP_DIR" | tee -a "$LOG_FILE"
 
-mv "$TEMP_DIR/scripts-sh-master" "$HOME/scripts"
-if [ $? -ne 0 ]; then
-    echo "Failed to move scripts to $HOME/scripts"
-    exit 1
-fi
+echo "Moving script files to \$HOME/scripts:"
+find "$TEMP_DIR/scripts-sh-master" -maxdepth 1 -type f ! -name "*.md" ! -name "*.log" -exec mv -v {} "$HOME/scripts/" \; | tee -a "$LOG_FILE"
 
-chmod +x "$HOME/scripts/*"
+echo "Making scripts executable..."
+chmod -v +x "$HOME/scripts/"* | tee -a "$LOG_FILE"
 
 echo "Removing scripts.zip and README.md..."
 rm -f "$TEMP_DIR/scripts.zip" "$TEMP_DIR/scripts-sh-master" "$HOME/scripts/README.md"
