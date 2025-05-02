@@ -63,10 +63,10 @@ sudo dnf config-manager setopt fedora-cisco-openh264.enabled=1
 install_if_missing curl wget unzip unrar p7zip git fastfetch htop
 
 echo "Swapping ffmpeg-free for ffmpeg..."
-sudo dnf swap ffmpeg-free ffmpeg --allowerasing
+sudo dnf swap ffmpeg-free ffmpeg --allowerasing -y
 
 echo "Installing multimedia codecs..."
-sudo dnf update @multimedia --setopt="install_weak_deps=False" --exclude=PackageKit-gstreamer-plugin
+sudo dnf group install -y multimedia
 
 echo "Installing intel-media-driver..."
 sudo dnf install intel-media-driver -y
