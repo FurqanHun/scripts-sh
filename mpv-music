@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+# Purpose: MPV wrapper for music playback
+# v0.1.4
+set -euo pipefail
+
+show_help() {
+  cat <<EOF
+🦍 MPV Music Script – Monke Edition 🍌
+
+Usage:
+  mpv-music [MUSIC_DIR] [OPTIONS]
+
+Examples:
+  mpv-music                             # Uses \$HOME/Music with default mpv flags
+  mpv-music /path/to/music              # Uses custom folder with default mpv flags
+  mpv-music --no-video --volume=20      # Uses \$HOME/Music with custom flags
+  mpv-music /path/to/music --no-video   # Custom folder + custom flags
+
+Options:
+  -h, --help         Show this help message and exit
+  --video-ok         Include video file formats
+  --ext=EXT1,EXT2    Use only specified extensions (comma-separated)
+
+Interactive Modes:
+  1) Album mode: Pick entire folders
+  2) Track mode: Pick individual files
+
+MPV default flags (if none passed): --loop-playlist=inf --shuffle --no-video
+EOF
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  show_help
+  exit 0
+fi
+
+VIDEO_OK=false
+CUSTOM_EXTS=""
+MUSIC_DIRS=(
+  "$HOME/Music"
+  "/mnt/qanhdd/A-STUFF/musicdd/"
+)
+MPV_ARGS=()
+
+# Handle MUSIC_DIR and collect MPV_ARGS
+if [[ $# -gt 0 && -d "$1" ]]; then
+  MUSIC_DIR="$1"
+  shift
+fi
+
+# Extract and remove custom script-specific flags
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --video-ok)
+      VIDEO_OK=true
+      shift
+      ;;
+    --ext=*)
+      CUSTOM_EXTS="${1#--ext=}"
+      shift
+      ;;
+    *)
+      MPV_ARGS+=("$1")
+      shift
+      ;;
+  esac
+done
+
+if [[ ${#MPV_ARGS[@]} -eq 0 ]]; then
+  MPV_ARGS=(--loop-playlist=inf --shuffle --no-video)
+fi
+
+# Build extension filter array
+EXT_FILTER=()
+
+if [[ -n "$CUSTOM_EXTS" ]]; then
+  IFS=',' read -ra EXTS <<< "$CUSTOM_EXTS"
+  for ext in "${EXTS[@]}"; do
+    EXT_FILTER+=( -iname "*.$ext" -o )
+  done
+elif [[ "$VIDEO_OK" == true ]]; then
+  for ext in mp3 flac wav m4a aac ogg opus wma alac aiff amr mp4 mkv webm avi mov flv wmv mpeg mpg 3gp ts vob m4v; do
+    EXT_FILTER+=( -iname "*.$ext" -o )
+  done
+else
+  for ext in mp3 flac wav m4a aac ogg opus wma alac aiff amr; do
+    EXT_FILTER+=( -iname "*.$ext" -o )
+  done
+fi
+# Remove last -o
+unset 'EXT_FILTER[${#EXT_FILTER[@]}-1]'
+
+echo "🎧 Pick mode:"
+echo "1) Play entire folder(s) (album mode)"
+echo "2) Pick individual tracks"
+read -rp "Enter choice [1/2]: " MODE
+
+if [[ "$MODE" == "1" ]]; then
+  SELECTED=$(find "${MUSIC_DIRS[@]}" -type d | fzf --multi --prompt="📁 Pick folder(s): ") || {
+    echo "No folders picked. Monke confused. 🙃"
+    exit 1
+  }
+
+  mapfile -t FOLDERS <<< "$SELECTED"
+  echo "📦 Selected ${#FOLDERS[@]} folder(s)."
+
+  FILES=()
+  for DIR in "${FOLDERS[@]}"; do
+    while IFS= read -r -d '' FILE; do
+      FILES+=("$FILE")
+    done < <(find "$DIR" -type f \( "${EXT_FILTER[@]}" \) -print0)
+  done
+
+  [[ ${#FILES[@]} -eq 0 ]] && echo "No music found in those folders. Monke hear nothing 🙊" && exit 1
+  echo "🎶 Found ${#FILES[@]} file(s) total."
+  mpv "${MPV_ARGS[@]}" "${FILES[@]}"
+
+elif [[ "$MODE" == "2" ]]; then
+  mapfile -t FILES < <(find "${MUSIC_DIRS[@]}" -type f \( "${EXT_FILTER[@]}" \) | fzf --multi --prompt="🎵 Pick your tracks: ")
+
+  [[ ${#FILES[@]} -eq 0 ]] && echo "No tracks picked. Monke walk away. 🚶" && exit 1
+  echo "🎶 Selected ${#FILES[@]} track(s)."
+  mpv "${MPV_ARGS[@]}" "${FILES[@]}"
+
+else
+  echo "Invalid input. Monke smash keyboard in confusion 🍌💥"
+  exit 1
+fi
