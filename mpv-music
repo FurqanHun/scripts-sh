@@ -1,11 +1,18 @@
 #!/usr/bin/env bash
 # Purpose: MPV wrapper for music playback
-# v0.1.4
 set -euo pipefail
+
+if ! command -v mpv &>/dev/null || ! command -v fzf &>/dev/null; then
+  echo "Missing dependencies. mpv-music requires:"
+  echo "- mpv: media player (https://mpv.io)"
+  echo "- fzf: fuzzy finder (https://github.com/junegunn/fzf)"
+  echo "Install them and try again."
+  exit 1
+fi
 
 show_help() {
   cat <<EOF
-🦍 MPV Music Script – Monke Edition 🍌
+🦍 MPV Music Script – Monke Wrapper 🍌 (v$VERSION)
 
 Usage:
   mpv-music [MUSIC_DIR] [OPTIONS]
@@ -18,6 +25,7 @@ Examples:
 
 Options:
   -h, --help         Show this help message and exit
+  -v, --version      Show version and exit
   --video-ok         Include video file formats
   --ext=EXT1,EXT2    Use only specified extensions (comma-separated)
 
@@ -26,25 +34,33 @@ Interactive Modes:
   2) Track mode: Pick individual files
 
 MPV default flags (if none passed): --loop-playlist=inf --shuffle --no-video
+
+Note: Requires GNU find (not BSD find).
 EOF
 }
+
+VIDEO_OK=false
+CUSTOM_EXTS=""
+MUSIC_DIRS=(
+  "$HOME/Music"
+  #"/mnt/qanhdd/A-STUFF/musicdd/"
+)
+MPV_ARGS=()
+VERSION="0.2.0"
 
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
   show_help
   exit 0
 fi
 
-VIDEO_OK=false
-CUSTOM_EXTS=""
-MUSIC_DIRS=(
-  "$HOME/Music"
-  "/mnt/qanhdd/A-STUFF/musicdd/"
-)
-MPV_ARGS=()
+if [[ "${1:-}" == "-v" || "${1:-}" == "--version" ]]; then
+  echo "mpv-music v$VERSION"
+  exit 0
+fi
 
-# Handle MUSIC_DIR and collect MPV_ARGS
+# Handle MUSIC_DIRS and collect MPV_ARGS
 if [[ $# -gt 0 && -d "$1" ]]; then
-  MUSIC_DIR="$1"
+  MUSIC_DIRS=("$1")
   shift
 fi
 
