@@ -10,6 +10,12 @@ if ! command -v mpv &>/dev/null || ! command -v fzf &>/dev/null; then
   exit 1
 fi
 
+if ! find --version 2>&1 | grep -q 'GNU findutils'; then
+  echo "Error: GNU find is required. Your system might be using BSD find."
+  echo "Please install GNU findutils!"
+  exit 1
+fi
+
 show_help() {
   cat <<EOF
 🦍 MPV Music Script – Monke Wrapper 🍌 (v$VERSION)
@@ -46,7 +52,7 @@ MUSIC_DIRS=(
   #"/mnt/qanhdd/A-STUFF/musicdd/"
 )
 MPV_ARGS=()
-VERSION="0.2.0"
+VERSION="0.2.1"
 
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
   show_help
