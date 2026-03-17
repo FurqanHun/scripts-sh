@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+# Purpose: Download YouTube videos or audio at best format. Using yt-dlp.
+
+# Usage:
+# ./ytwrap <URL> [--audio|-a | --video|-v] [--output|-o <path>]
+
+URL=""
+MODE=""
+OUTPUT=""
+
+# Defaults
+MUSIC_DIR="$HOME/Downloads/Music"
+VIDEO_DIR="$HOME/Downloads/Video"
+
+# Parse args
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -a|--audio)
+            MODE="audio"
+            shift
+            ;;
+        -v|--video)
+            MODE="video"
+            shift
+            ;;
+        -o|--output)
+            OUTPUT="$2"
+            shift 2
+            ;;
+        *)
+            if [[ -z "$URL" ]]; then
+                URL="$1"
+            else
+                echo "Unknown argument: $1"
+                exit 1
+            fi
+            shift
+            ;;
+    esac
+done
+
+# Check URL
+if [[ -z "$URL" ]]; then
+    echo "You must provide a YouTube URL."
+    exit 1
+fi
+
+# Determine output path
+if [[ -z "$OUTPUT" ]]; then
+    if [[ "$MODE" == "audio" ]]; then
+        OUTPUT="$MUSIC_DIR"
+    else
+        OUTPUT="$VIDEO_DIR"
+    fi
+fi
+
+mkdir -p "$OUTPUT"
+
+# yt-dlp common options
+YTDLP_COMMON="--js-runtime node"
+
+if [[ "$MODE" == "audio" ]]; then
+    echo "Downloading audio..."
+    yt-dlp $YTDLP_COMMON -f bestaudio -x --audio-format opus --embed-metadata --embed-thumbnail -o "$OUTPUT/%(title)s.%(ext)s" "$URL"
+
+elif [[ "$MODE" == "video" ]]; then
+    echo "Downloading video..."
+    yt-dlp $YTDLP_COMMON -f bestvideo+bestaudio --merge-output-format mp4 -o "$OUTPUT/%(title)s.%(ext)s" "$URL"
+
+else
+    echo "You must specify mode: --audio/-a or --video/-v"
+    exit 1
+fi

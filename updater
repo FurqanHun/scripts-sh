@@ -4,15 +4,15 @@
 set -euo pipefail
 
 shutdown=false
-restart=false
+reboot=false
 show_help=false
 for arg in "$@"; do
   case $arg in
     --shutdown)
       shutdown=true
       ;;
-    --restart)
-      restart=true
+    --reboot)
+      reboot=true
       ;;
       --help|-h)
       show_help=true
@@ -27,7 +27,7 @@ Usage: $(basename "$0") [OPTIONS]
 
 Options:
   --shutdown    Shutdown the system after updates
-  --restart     Restart the system after updates
+  --reboot      Reboot the system after updates
   --help, -h    Show this help message
 
 This script updates all packages on the system, including:
@@ -65,8 +65,8 @@ printf "All updates completed successfully!\n"
 if [ "$shutdown" = true ]; then
   echo "Shutting down the system..."
   sudo shutdown now
-elif [ "$restart" = true ]; then
-  echo "Restarting the system..."
+elif [ "$reboot" = true ]; then
+  echo "Rebooting the system..."
   sudo reboot
 fi
 

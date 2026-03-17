@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Purpose: List all scripts in ~/scripts and their purpose
+
+set -euo pipefail
+
+echo "List of all scripts in ~/scripts:"
+echo "----------------------------------------"
+printf "%-20s %s\n" "Script" "Purpose"
+echo "----------------------------------------"
+for script in ~/scripts/*; do
+    if [ -f "$script" ]; then
+        purpose=$(grep -m 1 -oP '# Purpose: \K.*' "$script" || echo "N/A")
+        printf "%-20s %s\n" "$(basename "$script")" "$purpose"
+    fi
+done
