@@ -6,6 +6,8 @@ set -euo pipefail
 shutdown=false
 reboot=false
 show_help=false
+skip_dnf=false
+skip_flatpak=false
 for arg in "$@"; do
   case $arg in
     --shutdown)
@@ -14,7 +16,13 @@ for arg in "$@"; do
     --reboot)
       reboot=true
       ;;
-      --help|-h)
+    --skip-dnf)
+      skip_dnf=true
+      ;;
+    --skip-flatpak)
+      skip_flatpak=true
+      ;;
+    --help|-h)
       show_help=true
       ;;
   esac
@@ -26,15 +34,18 @@ if [ "$show_help" = true ]; then
 Usage: $(basename "$0") [OPTIONS]
 
 Options:
-  --shutdown    Shutdown the system after updates
-  --reboot      Reboot the system after updates
-  --help, -h    Show this help message
+  --shutdown        Shutdown the system after updates
+  --reboot          Reboot the system after updates
+  --skip-dnf        Skip DNF package updates
+  --skip-flatpak    Skip Flatpak updates
+  --help, -h        Show this help message
 
 This script updates all packages on the system, including:
   - DNF packages
   - auto-cpufreq
   - atuin
   - Flatpak packages
+  - Antigravity IDE (via ag2-ide-update)
 
 EOF
   exit 0
@@ -44,8 +55,12 @@ fi
 sudo_pid=$!
 
 echo
-printf "Updating DNF packages...\n"
-sudo dnf update --refresh -y
+if [ "$skip_dnf" = true ]; then
+  printf "Skipping DNF packages...\n"
+else
+  printf "Updating DNF packages...\n"
+  sudo dnf update --refresh -y
+fi
 
 echo
 printf "Updating auto-cpufreq...\n"
@@ -56,8 +71,20 @@ printf "Updating atuin...\n"
 atuin-update
 
 echo
-printf "Updating Flatpaks...\n"
-flatpak update -y
+if [ "$skip_flatpak" = true ]; then
+  printf "Skipping Flatpaks...\n"
+else
+  printf "Updating Flatpaks...\n"
+  flatpak update -y
+fi
+
+echo
+printf "Updating Antigravity IDE...\n"
+if command -v ag2-ide-update >/dev/null 2>&1; then
+  ag2-ide-update
+else
+  printf "ag2-ide-update not found in PATH, skipping.\n"
+fi
 
 echo
 printf "All updates completed successfully!\n"
