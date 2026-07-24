@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Purpose: Installs Antigravity IDE and its dependencies from source.
+
+if [ -f /etc/os-release ]; then
+  . /etc/os-release
+  if [ "$ID" != "fedora" ]; then
+    echo "stfu this aint feodra"
+    exit 1
+  fi
+else
+  echo "stfu this aint feodra"
+  exit 1
+fi
+
+sudo dnf install -y spectool rpkg tar gzip git
+
+git clone https://github.com/jrobertogarcia/antigravity-2-fedora-installer.git
+cd antigravity-2-fedora-installer
+
+./build-ide.sh
+
+sudo dnf install -y ~/rpkg/$(uname -m)/antigravity2-ide-*.rpm
+
+cd ..
+rm -rf antigravity-2-fedora-installer ~/rpkg
